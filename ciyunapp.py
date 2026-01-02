@@ -143,16 +143,16 @@ st.markdown("""
 
 # ==================== 页面 1: 学生端 (实时弹幕) ====================
 if page == "我是学生 (发送弹幕)":
-    # 标题行：标题 + 刷新按钮
-    col_title, col_refresh = st.columns([5, 1])
-    with col_title:
-        st.markdown("<h1 class='main-title'>🎬 实时弹幕</h1>", unsafe_allow_html=True)
-    with col_refresh:
-        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)  # 垂直对齐
-        if st.button("🔄 刷新", use_container_width=True, help="点击刷新查看最新弹幕"):
-            st.rerun()
+    # 检测用户是否正在输入（输入框有内容时暂停刷新）
+    is_typing = bool(st.session_state.get('msg_input', ''))
     
-    # 获取数据（不自动刷新，避免输入时闪烁）
+    # 只有在用户没有输入时才自动刷新
+    if not is_typing:
+        st_autorefresh(interval=3000, key="student_refresh")
+    
+    st.markdown("<h1 class='main-title'>🎬 实时弹幕</h1>", unsafe_allow_html=True)
+    
+    # 获取数据
     logs = db.get_logs()
     data = db.get_cloud_data()
     
