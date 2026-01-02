@@ -4,6 +4,7 @@ import streamlit.components.v1 as components
 import json
 import pandas as pd
 from datetime import datetime
+from db import Neo4jHandler
 
 # ======================= 系统配置区 =======================
 # 1. 专属标签 (通过修改这个后缀，区分不同的人)
@@ -20,68 +21,12 @@ NEO4J_PASSWORD = "wE7pV36hqNSo43mpbjTlfzE7n99NWcYABDFqUGvgSrk"
 
 st.set_page_config(page_title="互动课堂系统", layout="wide", page_icon="🎓")
 
-# --- 模拟数据 (当数据库连接失败时使用) ---
-if 'mock_cloud' not in st.session_state: st.session_state.mock_cloud = []
-if 'mock_logs' not in st.session_state: st.session_state.mock_logs = []
-if 'db_available' not in st.session_state: st.session_state.db_available = False  # 默认使用演示模式
+# 直接连接数据库（每次请求都创建新连接，确保数据同步）
+def get_db():
+    """获取数据库连接"""
+    return Neo4jHandler(NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD, label=TARGET_LABEL)
 
-def mock_action(action_type, *args):
-    if action_type == 'add':
-        name, content = args
-        found = False
-        for item in st.session_state.mock_cloud:
-            if item['name'] == content: item['value'] += 1; found = True; break
-        if not found: st.session_state.mock_cloud.append({"name": content, "value": 1})
-        st.session_state.mock_logs.insert(0, {"时间": datetime.now().strftime('%H:%M:%S'), "姓名": name, "内容": content})
-    elif action_type == 'get_cloud': return sorted(st.session_state.mock_cloud, key=lambda x: x['value'], reverse=True)
-    elif action_type == 'get_logs': return st.session_state.mock_logs
-    elif action_type == 'clear_cloud': st.session_state.mock_cloud = []  # 只清除词云，保留日志
-    elif action_type == 'clear': st.session_state.mock_cloud = []; st.session_state.mock_logs = []  # 清除所有
-
-# 尝试连接数据库
-db = None
-
-# 首次运行时测试数据库连接
-if st.session_state.db_available is None:
-    try:
-        from db import Neo4jHandler
-        _db = Neo4jHandler(NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD, label=TARGET_LABEL)
-        if _db.test_connection():
-            st.session_state.db_available = True
-            db = _db
-        else:
-            st.session_state.db_available = False
-    except Exception:
-        st.session_state.db_available = False
-    
-    if not st.session_state.db_available:
-        st.toast("⚠️ 数据库连接失败，启用演示模式", icon="⚠️")
-
-# 后续运行复用连接状态
-elif st.session_state.db_available:
-    try:
-        from db import Neo4jHandler
-        db = Neo4jHandler(NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD, label=TARGET_LABEL)
-    except Exception:
-        db = None
-
-# 如果之前测试失败，不再尝试使用数据库
-if st.session_state.db_available == False:
-    db = None
-
-# 封装安全的数据库调用
-def safe_db_call(db_func, mock_func, *args):
-    """安全调用数据库，失败时自动切换到模拟模式"""
-    global db
-    if db:
-        try:
-            return db_func()
-        except Exception:
-            db = None
-            st.session_state.db_available = False
-            return mock_func(*args) if args else mock_func()
-    else:
-        return mock_func(*args) if args else mock_func()
+db = get_db()
 
 # ==================== 初始化 session_state ====================
 if 'student_name' not in st.session_state: st.session_state.student_name = ""
@@ -89,6 +34,24 @@ if 'danmu_msg' not in st.session_state: st.session_state.danmu_msg = ""
 
 # ==================== 侧边栏导航 ====================
 st.sidebar.title("🚀 导航栏")
+
+# 实际测试数据库连接并显示数据统计
+try:
+    test_result = db.test_connection()
+    if test_result:
+        # 获取当前数据库中的记录数量作为验证
+        logs = db.get_logs()
+        log_count = len(logs) if logs else 0
+        st.sidebar.success(f"🟢 云数据库已连接 (共{log_count}条记录)")
+        # 显示最近一条记录用于调试
+        if logs and len(logs) > 0:
+            latest = logs[0]
+            st.sidebar.caption(f"最新: {latest.get('姓名', '?')} - {latest.get('内容', '?')[:10]}")
+    else:
+        st.sidebar.error("🔴 数据库连接失败")
+except Exception as e:
+    st.sidebar.error(f"🔴 连接错误: {e}")
+
 page = st.sidebar.radio("选择入口", ["我是学生 (发送弹幕)", "我是老师 (后台管理)"])
 
 # 学生输入区域放在侧边栏
@@ -101,7 +64,7 @@ def on_send():
     name = st.session_state.get('name_input', '')
     msg = st.session_state.get('msg_input', '')
     if name and msg:
-        safe_db_call(lambda: db.add_record(name, msg), lambda: mock_action('add', name, msg))
+        db.add_record(name, msg)
         st.session_state.msg_input = ""  # 只清空弹幕内容
         st.toast("✅ 发送成功！", icon="🎉")
 
@@ -132,7 +95,7 @@ with st.sidebar.expander("🗑️ 管理员清屏"):
     clean_pwd = st.text_input("输入管理密码", type="password", key="clean_pwd")
     if st.button("确认清空词云", type="primary", use_container_width=True):
         if clean_pwd == ADMIN_PASSWORD:
-            safe_db_call(lambda: db.clear_cloud_only(), lambda: mock_action('clear_cloud'))
+            db.clear_cloud_only()
             st.toast("词云已清空！后台数据保留", icon="✅")
             st.rerun()
         else:
@@ -145,6 +108,12 @@ st.markdown("""
     div[data-testid="stMetricValue"] {font-size: 24px; color: #4F46E5;}
     /* 隐藏页面导航菜单 */
     [data-testid="stSidebarNav"] {display: none;}
+    /* 手机端适配 */
+    @media (max-width: 768px) {
+        .main-title {font-size: 1.5rem !important;}
+        iframe {min-height: 350px !important;}
+        [data-testid="column"] {width: 100% !important; flex: 1 1 100% !important;}
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -156,8 +125,8 @@ if page == "我是学生 (发送弹幕)":
     st.markdown("<h1 class='main-title'>🎬 实时弹幕</h1>", unsafe_allow_html=True)
     
     # 获取数据
-    logs = safe_db_call(lambda: db.get_logs(), lambda: mock_action('get_logs'))
-    data = safe_db_call(lambda: db.get_cloud_data(), lambda: mock_action('get_cloud'))
+    logs = db.get_logs()
+    data = db.get_cloud_data()
     
     # 左右布局：词云墙 + 排行榜
     col_cloud, col_rank = st.columns([3, 1])
@@ -169,10 +138,11 @@ if page == "我是学生 (发送弹幕)":
             word_list = [[item['name'], item['value']] for item in data]
             html_code = f"""
             <!DOCTYPE html><html><head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
             <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.1.1/src/wordcloud2.js"></script>
             <style>
-                html, body {{margin:0;padding:0;background:transparent;overflow:hidden;height:100%;}}
-                #canvas{{width:100%;height:100%;}}
+                html, body {{margin:0;padding:0;background:transparent;overflow:hidden;width:100%;height:100%;}}
+                #canvas{{width:100%;height:100%;display:block;}}
                 .word-item {{
                     animation: float 3s ease-in-out infinite;
                     font-weight: bold;
@@ -183,27 +153,47 @@ if page == "我是学生 (发送弹幕)":
                 }}
             </style>
             </head><body><div id="canvas"></div><script>
-            const list = {json.dumps(word_list)};
+            const list = {json.dumps(word_list, ensure_ascii=False)};
             const colors = ['#2563eb','#9333ea','#db2777','#ea580c','#16a34a','#0891b2','#f59e0b','#10b981'];
             function getColor(){{ return colors[Math.floor(Math.random()*colors.length)]; }}
             
-            const canvasEl = document.getElementById('canvas');
-            const width = canvasEl.offsetWidth || 800;
-            const height = canvasEl.offsetHeight || 500;
+            function renderCloud() {{
+                const canvasEl = document.getElementById('canvas');
+                const width = canvasEl.offsetWidth || window.innerWidth || 350;
+                const height = canvasEl.offsetHeight || window.innerHeight || 400;
+                const isMobile = width < 600;
+                
+                // 清空之前的内容
+                canvasEl.innerHTML = '';
+                
+                WordCloud(canvasEl, {{
+                    list: list, 
+                    gridSize: isMobile ? 16 : 28,
+                    weightFactor: function(s){{ 
+                        const base = isMobile ? 16 : 25;
+                        const factor = isMobile ? 22 : 35;
+                        return base + Math.log(s+1) * factor; 
+                    }},
+                    fontFamily: '-apple-system, BlinkMacSystemFont, Microsoft YaHei, Arial, sans-serif', 
+                    fontWeight: 'bold',
+                    color: getColor, 
+                    backgroundColor: 'transparent',
+                    rotateRatio: 0, 
+                    shuffle: false, 
+                    drawOutOfBound: false,
+                    classes: 'word-item',
+                    origin: [width/2, height/2],
+                    wait: 50
+                }});
+            }}
             
-            WordCloud(canvasEl, {{
-                list: list, 
-                gridSize: 28,
-                weightFactor: function(s){{ return 25 + Math.log(s+1) * 35; }},
-                fontFamily: 'Microsoft YaHei, Arial, sans-serif', 
-                fontWeight: 'bold',
-                color: getColor, 
-                backgroundColor: 'transparent',
-                rotateRatio: 0, 
-                shuffle: false, 
-                drawOutOfBound: false,
-                classes: 'word-item',
-                origin: [width/2, height/2]
+            // 延迟渲染确保容器尺寸正确
+            setTimeout(renderCloud, 100);
+            
+            // 监听窗口变化重新渲染
+            window.addEventListener('resize', function() {{
+                clearTimeout(window.resizeTimer);
+                window.resizeTimer = setTimeout(renderCloud, 300);
             }});
             
             setTimeout(function() {{
@@ -212,10 +202,10 @@ if page == "我是学生 (发送弹幕)":
                     word.style.animation = `float ${{2.5 + Math.random()*2}}s ease-in-out infinite ${{Math.random()*2}}s`;
                     word.style.transition = 'all 0.3s ease';
                 }});
-            }}, 1000);
+            }}, 1500);
             </script></body></html>
             """
-            components.html(html_code, height=500, scrolling=False)
+            components.html(html_code, height=450, scrolling=False)
     
     with col_rank:
         st.markdown("<h3 style='text-align:center;'>🏆 发言排行榜</h3>", unsafe_allow_html=True)
@@ -264,7 +254,7 @@ elif page == "我是老师 (后台管理)":
         
         st.divider()
         
-        logs = safe_db_call(lambda: db.get_logs(), lambda: mock_action('get_logs'))
+        logs = db.get_logs()
         df = pd.DataFrame(logs if logs else [])
         
         m1, m2 = st.columns(2)
@@ -281,6 +271,6 @@ elif page == "我是老师 (后台管理)":
         st.markdown("---")
         with st.expander("⚠️ 危险区域"):
             if st.button("🗑️ 清空所有数据 (慎点)", type="primary"):
-                safe_db_call(lambda: db.clear_all(), lambda: mock_action('clear'))
+                db.clear_all()
                 st.warning("所有数据已清空！")
                 st.rerun()
