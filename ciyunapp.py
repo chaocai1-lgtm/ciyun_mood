@@ -114,18 +114,22 @@ st.markdown("""
     /* 隐藏页面导航菜单 */
     [data-testid="stSidebarNav"] {display: none;}
     
-    /* fragment 刷新时的平滑过渡 */
-    [data-testid="stVerticalBlock"] {
-        animation: fadeIn 0.5s ease-in-out;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0.7; }
-        to { opacity: 1; }
+    /* 平滑刷新 - 防止闪烁 */
+    .stApp, .main, [data-testid="stAppViewContainer"], 
+    [data-testid="stVerticalBlock"], [data-testid="column"] {
+        transition: none !important;
+        animation: none !important;
     }
     
-    /* iframe 平滑过渡 */
+    /* iframe 词云区域平滑过渡 */
     iframe {
-        transition: opacity 0.4s ease-in-out;
+        opacity: 1 !important;
+        transition: none !important;
+    }
+    
+    /* 保持背景稳定 */
+    .element-container, .stMarkdown, .row-widget {
+        background: transparent;
     }
     
     /* 手机端适配 */
@@ -161,17 +165,9 @@ if page == "我是学生 (发送弹幕)":
                 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
                 <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.1.1/src/wordcloud2.js"></script>
                 <style>
-                    html, body {{margin:0;padding:0;background:transparent;overflow:hidden;width:100%;height:100%;}}
-                    #canvas{{
-                        width:100%;
-                        height:100%;
-                        display:block;
-                        opacity: 1;
-                        transition: opacity 0.3s ease-in-out;
-                    }}
-                    #canvas.updating {{
-                        opacity: 0.7;
-                    }}
+                    html, body {{margin:0;padding:0;background:#f8f9fa;overflow:hidden;width:100%;height:100%;}}
+                    #canvas{{width:100%;height:100%;display:block;opacity:0;transition:opacity 0.5s ease;}}
+                    #canvas.loaded {{opacity:1;}}
                     .word-item {{
                         animation: float 3s ease-in-out infinite;
                         font-weight: bold;
@@ -193,6 +189,7 @@ if page == "我是学生 (发送弹幕)":
                     const isMobile = width < 600;
                     
                     canvasEl.innerHTML = '';
+                    canvasEl.classList.remove('loaded');
                     
                     WordCloud(canvasEl, {{
                         list: list, 
@@ -213,6 +210,11 @@ if page == "我是学生 (发送弹幕)":
                         origin: [width/2, height/2],
                         wait: 50
                     }});
+                    
+                    // 渲染完成后淡入显示
+                    setTimeout(function() {{
+                        canvasEl.classList.add('loaded');
+                    }}, 300);
                 }}
                 
                 setTimeout(renderCloud, 100);
