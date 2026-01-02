@@ -66,11 +66,16 @@ def on_send():
     if name and msg:
         db.add_record(name, msg)
         st.session_state.msg_input = ""  # 只清空弹幕内容
-        st.toast("✅ 发送成功！", icon="🎉")
+        st.session_state.just_sent = True  # 标记刚发送，用于刷新
 
 def on_reset():
     st.session_state.name_input = ""
     st.session_state.msg_input = ""
+
+# 发送后自动刷新
+if st.session_state.get('just_sent', False):
+    st.session_state.just_sent = False
+    st.toast("✅ 发送成功！", icon="🎉")
 
 # 姓名输入框
 student_name = st.sidebar.text_input("你的姓名", placeholder="例如：张三", key="name_input")
@@ -126,10 +131,13 @@ st.markdown("""
 
 # ==================== 页面 1: 学生端 (实时弹幕) ====================
 if page == "我是学生 (发送弹幕)":
-    # 自动刷新 (5秒一次，减少闪烁)
-    st_autorefresh(interval=5000, key="student_refresh")
-    
-    st.markdown("<h1 class='main-title'>🎬 实时弹幕</h1>", unsafe_allow_html=True)
+    # 标题和刷新按钮放一行
+    title_col, refresh_col = st.columns([4, 1])
+    with title_col:
+        st.markdown("<h1 class='main-title'>🎬 实时弹幕</h1>", unsafe_allow_html=True)
+    with refresh_col:
+        if st.button("🔄 刷新", use_container_width=True):
+            st.rerun()
     
     # 获取数据
     logs = db.get_logs()
