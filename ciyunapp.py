@@ -113,13 +113,21 @@ st.markdown("""
     div[data-testid="stMetricValue"] {font-size: 24px; color: #4F46E5;}
     /* 隐藏页面导航菜单 */
     [data-testid="stSidebarNav"] {display: none;}
-    /* 减少刷新闪烁 */
-    .stApp, .main, [data-testid="stAppViewContainer"] {
-        transition: none !important;
+    
+    /* fragment 刷新时的平滑过渡 */
+    [data-testid="stVerticalBlock"] {
+        animation: fadeIn 0.5s ease-in-out;
     }
+    @keyframes fadeIn {
+        from { opacity: 0.7; }
+        to { opacity: 1; }
+    }
+    
+    /* iframe 平滑过渡 */
     iframe {
-        transition: opacity 0.3s ease;
+        transition: opacity 0.4s ease-in-out;
     }
+    
     /* 手机端适配 */
     @media (max-width: 768px) {
         .main-title {font-size: 1.5rem !important;}
@@ -154,7 +162,16 @@ if page == "我是学生 (发送弹幕)":
                 <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.1.1/src/wordcloud2.js"></script>
                 <style>
                     html, body {{margin:0;padding:0;background:transparent;overflow:hidden;width:100%;height:100%;}}
-                    #canvas{{width:100%;height:100%;display:block;}}
+                    #canvas{{
+                        width:100%;
+                        height:100%;
+                        display:block;
+                        opacity: 1;
+                        transition: opacity 0.3s ease-in-out;
+                    }}
+                    #canvas.updating {{
+                        opacity: 0.7;
+                    }}
                     .word-item {{
                         animation: float 3s ease-in-out infinite;
                         font-weight: bold;
