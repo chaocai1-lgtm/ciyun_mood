@@ -136,6 +136,26 @@ io.on('connection', async (socket) => {
         }
     });
     
+    // 验证管理员密码
+    socket.on('verifyAdmin', (data) => {
+        if (data.password === ADMIN_PASSWORD) {
+            socket.emit('adminVerified', { success: true });
+        } else {
+            socket.emit('adminVerified', { success: false });
+        }
+    });
+    
+    // 请求刷新数据
+    socket.on('requestData', async () => {
+        try {
+            const cloudData = await getCloudData();
+            const logs = await getLogs();
+            socket.emit('init', { cloudData, logs });
+        } catch (err) {
+            console.error('获取数据失败:', err);
+        }
+    });
+    
     // 管理员清空词云
     socket.on('clearCloud', async (data) => {
         if (data.password !== ADMIN_PASSWORD) {
