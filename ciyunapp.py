@@ -114,22 +114,26 @@ st.markdown("""
     /* 隐藏页面导航菜单 */
     [data-testid="stSidebarNav"] {display: none;}
     
-    /* 平滑刷新 - 防止闪烁 */
-    .stApp, .main, [data-testid="stAppViewContainer"], 
-    [data-testid="stVerticalBlock"], [data-testid="column"] {
+    /* 防止刷新闪烁 - 所有元素禁用过渡动画 */
+    *, *::before, *::after {
         transition: none !important;
-        animation: none !important;
+        animation-duration: 0s !important;
     }
     
-    /* iframe 词云区域平滑过渡 */
-    iframe {
-        opacity: 1 !important;
+    /* 侧边栏稳定 */
+    [data-testid="stSidebar"], 
+    [data-testid="stSidebar"] * {
         transition: none !important;
     }
     
-    /* 保持背景稳定 */
-    .element-container, .stMarkdown, .row-widget {
-        background: transparent;
+    /* 输入框保持稳定 */
+    .stTextInput, .stTextInput input {
+        transition: none !important;
+    }
+    
+    /* 词云淡入效果例外 */
+    #canvas, #canvas.loaded {
+        transition: opacity 0.5s ease !important;
     }
     
     /* 手机端适配 */
