@@ -131,121 +131,116 @@ st.markdown("""
 
 # ==================== 页面 1: 学生端 (实时弹幕) ====================
 if page == "我是学生 (发送弹幕)":
-    # 标题和刷新按钮放一行
-    title_col, refresh_col = st.columns([4, 1])
-    with title_col:
-        st.markdown("<h1 class='main-title'>🎬 实时弹幕</h1>", unsafe_allow_html=True)
-    with refresh_col:
-        if st.button("🔄 刷新", use_container_width=True):
-            st.rerun()
+    st.markdown("<h1 class='main-title'>🎬 实时弹幕</h1>", unsafe_allow_html=True)
     
-    # 获取数据
-    logs = db.get_logs()
-    data = db.get_cloud_data()
-    
-    # 左右布局：词云墙 + 排行榜
-    col_cloud, col_rank = st.columns([3, 1])
-    
-    with col_cloud:
-        if not data:
-            st.warning("暂无数据，快来发送第一条弹幕！")
-        else:
-            word_list = [[item['name'], item['value']] for item in data]
-            html_code = f"""
-            <!DOCTYPE html><html><head>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-            <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.1.1/src/wordcloud2.js"></script>
-            <style>
-                html, body {{margin:0;padding:0;background:transparent;overflow:hidden;width:100%;height:100%;}}
-                #canvas{{width:100%;height:100%;display:block;}}
-                .word-item {{
-                    animation: float 3s ease-in-out infinite;
-                    font-weight: bold;
-                }}
-                @keyframes float {{
-                    0%, 100% {{ transform: translateY(0px); }}
-                    50% {{ transform: translateY(-6px); }}
-                }}
-            </style>
-            </head><body><div id="canvas"></div><script>
-            const list = {json.dumps(word_list, ensure_ascii=False)};
-            const colors = ['#2563eb','#9333ea','#db2777','#ea580c','#16a34a','#0891b2','#f59e0b','#10b981'];
-            function getColor(){{ return colors[Math.floor(Math.random()*colors.length)]; }}
-            
-            function renderCloud() {{
-                const canvasEl = document.getElementById('canvas');
-                const width = canvasEl.offsetWidth || window.innerWidth || 350;
-                const height = canvasEl.offsetHeight || window.innerHeight || 400;
-                const isMobile = width < 600;
+    # 使用 fragment 实现局部刷新，不会闪烁整个页面
+    @st.fragment(run_every=3)  # 每3秒刷新这个区域
+    def show_wordcloud():
+        # 获取数据
+        logs = db.get_logs()
+        data = db.get_cloud_data()
+        
+        # 左右布局：词云墙 + 排行榜
+        col_cloud, col_rank = st.columns([3, 1])
+        
+        with col_cloud:
+            if not data:
+                st.warning("暂无数据，快来发送第一条弹幕！")
+            else:
+                word_list = [[item['name'], item['value']] for item in data]
+                html_code = f"""
+                <!DOCTYPE html><html><head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.1.1/src/wordcloud2.js"></script>
+                <style>
+                    html, body {{margin:0;padding:0;background:transparent;overflow:hidden;width:100%;height:100%;}}
+                    #canvas{{width:100%;height:100%;display:block;}}
+                    .word-item {{
+                        animation: float 3s ease-in-out infinite;
+                        font-weight: bold;
+                    }}
+                    @keyframes float {{
+                        0%, 100% {{ transform: translateY(0px); }}
+                        50% {{ transform: translateY(-6px); }}
+                    }}
+                </style>
+                </head><body><div id="canvas"></div><script>
+                const list = {json.dumps(word_list, ensure_ascii=False)};
+                const colors = ['#2563eb','#9333ea','#db2777','#ea580c','#16a34a','#0891b2','#f59e0b','#10b981'];
+                function getColor(){{ return colors[Math.floor(Math.random()*colors.length)]; }}
                 
-                // 清空之前的内容
-                canvasEl.innerHTML = '';
+                function renderCloud() {{
+                    const canvasEl = document.getElementById('canvas');
+                    const width = canvasEl.offsetWidth || window.innerWidth || 350;
+                    const height = canvasEl.offsetHeight || window.innerHeight || 400;
+                    const isMobile = width < 600;
+                    
+                    canvasEl.innerHTML = '';
+                    
+                    WordCloud(canvasEl, {{
+                        list: list, 
+                        gridSize: isMobile ? 16 : 28,
+                        weightFactor: function(s){{ 
+                            const base = isMobile ? 16 : 25;
+                            const factor = isMobile ? 22 : 35;
+                            return base + Math.log(s+1) * factor; 
+                        }},
+                        fontFamily: '-apple-system, BlinkMacSystemFont, Microsoft YaHei, Arial, sans-serif', 
+                        fontWeight: 'bold',
+                        color: getColor, 
+                        backgroundColor: 'transparent',
+                        rotateRatio: 0, 
+                        shuffle: false, 
+                        drawOutOfBound: false,
+                        classes: 'word-item',
+                        origin: [width/2, height/2],
+                        wait: 50
+                    }});
+                }}
                 
-                WordCloud(canvasEl, {{
-                    list: list, 
-                    gridSize: isMobile ? 16 : 28,
-                    weightFactor: function(s){{ 
-                        const base = isMobile ? 16 : 25;
-                        const factor = isMobile ? 22 : 35;
-                        return base + Math.log(s+1) * factor; 
-                    }},
-                    fontFamily: '-apple-system, BlinkMacSystemFont, Microsoft YaHei, Arial, sans-serif', 
-                    fontWeight: 'bold',
-                    color: getColor, 
-                    backgroundColor: 'transparent',
-                    rotateRatio: 0, 
-                    shuffle: false, 
-                    drawOutOfBound: false,
-                    classes: 'word-item',
-                    origin: [width/2, height/2],
-                    wait: 50
+                setTimeout(renderCloud, 100);
+                
+                window.addEventListener('resize', function() {{
+                    clearTimeout(window.resizeTimer);
+                    window.resizeTimer = setTimeout(renderCloud, 300);
                 }});
-            }}
-            
-            // 延迟渲染确保容器尺寸正确
-            setTimeout(renderCloud, 100);
-            
-            // 监听窗口变化重新渲染
-            window.addEventListener('resize', function() {{
-                clearTimeout(window.resizeTimer);
-                window.resizeTimer = setTimeout(renderCloud, 300);
-            }});
-            
-            setTimeout(function() {{
-                const words = document.querySelectorAll('#canvas span, #canvas text');
-                words.forEach((word, i) => {{
-                    word.style.animation = `float ${{2.5 + Math.random()*2}}s ease-in-out infinite ${{Math.random()*2}}s`;
-                    word.style.transition = 'all 0.3s ease';
-                }});
-            }}, 1500);
-            </script></body></html>
-            """
-            components.html(html_code, height=450, scrolling=False)
+                
+                setTimeout(function() {{
+                    const words = document.querySelectorAll('#canvas span, #canvas text');
+                    words.forEach((word, i) => {{
+                        word.style.animation = `float ${{2.5 + Math.random()*2}}s ease-in-out infinite ${{Math.random()*2}}s`;
+                        word.style.transition = 'all 0.3s ease';
+                    }});
+                }}, 1500);
+                </script></body></html>
+                """
+                components.html(html_code, height=450, scrolling=False)
+        
+        with col_rank:
+            st.markdown("<h3 style='text-align:center;'>🏆 发言排行榜</h3>", unsafe_allow_html=True)
+            if logs:
+                from collections import Counter
+                name_counts = Counter([log['姓名'] for log in logs])
+                top10 = name_counts.most_common(10)
+                
+                rank_html = "<div style='text-align:center; font-size:16px; line-height:2;'>"
+                for i, (name, count) in enumerate(top10, 1):
+                    if i == 1:
+                        medal = "🥇"
+                    elif i == 2:
+                        medal = "🥈"
+                    elif i == 3:
+                        medal = "🥉"
+                    else:
+                        medal = f"<span style='display:inline-block;width:24px;'>{i}.</span>"
+                    rank_html += f"<div><span style='display:inline-block;width:28px;'>{medal}</span><span style='display:inline-block;width:80px;text-align:left;'>{name}</span> <span style='color:#666;'>{count}条</span></div>"
+                rank_html += "</div>"
+                st.markdown(rank_html, unsafe_allow_html=True)
+            else:
+                st.caption("暂无数据")
     
-    with col_rank:
-        st.markdown("<h3 style='text-align:center;'>🏆 发言排行榜</h3>", unsafe_allow_html=True)
-        # 统计每个人发送弹幕的数量
-        if logs:
-            from collections import Counter
-            name_counts = Counter([log['姓名'] for log in logs])
-            top10 = name_counts.most_common(10)
-            
-            # 构建居中对齐的排行榜HTML
-            rank_html = "<div style='text-align:center; font-size:16px; line-height:2;'>"
-            for i, (name, count) in enumerate(top10, 1):
-                if i == 1:
-                    medal = "🥇"
-                elif i == 2:
-                    medal = "🥈"
-                elif i == 3:
-                    medal = "🥉"
-                else:
-                    medal = f"<span style='display:inline-block;width:24px;'>{i}.</span>"
-                rank_html += f"<div><span style='display:inline-block;width:28px;'>{medal}</span><span style='display:inline-block;width:80px;text-align:left;'>{name}</span> <span style='color:#666;'>{count}条</span></div>"
-            rank_html += "</div>"
-            st.markdown(rank_html, unsafe_allow_html=True)
-        else:
-            st.caption("暂无数据")
+    # 调用 fragment 函数
+    show_wordcloud()
 
 # ==================== 页面 2: 管理端 ====================
 elif page == "我是老师 (后台管理)":
