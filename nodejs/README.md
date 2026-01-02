@@ -62,6 +62,25 @@ const TARGET_LABEL = "数据标签";
 const ADMIN_PASSWORD = "管理员密码";
 ```
 
+### 🤖 AI 功能配置 (DeepSeek)
+
+系统集成了 DeepSeek AI 进行弹幕智能分析，包括：
+- 📊 **弹幕总结** - 分析学生弹幕的整体情况、热点话题、精华观点
+- 💎 **精华提炼** - 去重并提炼最有价值的学生发言
+- ☁️ **词云分析** - 基于词云数据分析学生关注点和学习状态
+
+#### 在 Render 上配置环境变量
+
+1. 登录 Render 控制台
+2. 选择你的 Web Service
+3. 进入 **Environment** 选项卡
+4. 添加环境变量：
+   - **Key**: `DEEPSEEK_API_KEY`
+   - **Value**: `你的DeepSeek API密钥`
+5. 保存后服务会自动重新部署
+
+> ⚠️ **安全提示**: 不要将 API 密钥直接写在代码中提交到 GitHub，请使用环境变量！
+
 ## 📂 文件结构
 
 ```

@@ -181,6 +181,219 @@
             margin-bottom: 5px;
         }
         
+        /* AI 按钮样式 */
+        .btn-ai {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white;
+            font-size: 14px;
+            padding: 8px 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .btn-ai:hover {
+            box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4);
+        }
+        
+        .ai-buttons {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+        
+        .ai-buttons h4 {
+            color: #00b894;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        /* AI 结果弹窗 */
+        .ai-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .ai-modal.show {
+            display: flex;
+        }
+        
+        .ai-modal-content {
+            background: white;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .ai-modal-header {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .ai-modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+        
+        .ai-modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+        
+        .ai-modal-body {
+            padding: 20px;
+            max-height: calc(80vh - 60px);
+            overflow-y: auto;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            font-size: 15px;
+        }
+        
+        .ai-loading {
+            text-align: center;
+            padding: 40px;
+            color: #00b894;
+        }
+        
+        .ai-loading .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e0e0e0;
+            border-top-color: #00b894;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 问题展示区 */
+        .question-display {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .question-display .label {
+            color: #667eea;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .question-display .question-text {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .question-display.empty {
+            opacity: 0.7;
+            font-style: italic;
+        }
+        
+        /* AI 分析结果展示区 */
+        .ai-result-display {
+            background: linear-gradient(135deg, rgba(0,184,148,0.1), rgba(0,206,201,0.1));
+            border: 2px solid #00b894;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .ai-result-display.show {
+            display: block;
+        }
+        
+        .ai-result-display .ai-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .ai-result-display .ai-title {
+            color: #00b894;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .ai-result-display .ai-close {
+            background: none;
+            border: none;
+            color: #00b894;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .ai-result-display .ai-content {
+            color: #333;
+            line-height: 1.8;
+            font-size: 15px;
+            white-space: pre-wrap;
+        }
+        
+        /* 问题设置区 */
+        .question-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .question-section h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .question-section textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            resize: none;
+            height: 60px;
+            margin-bottom: 8px;
+        }
+        
+        .question-section textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn-question {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 13px;
+            padding: 8px 15px;
+            margin-right: 5px;
+        }
+        
         /* 主内容区 */
         .main-content {
             flex: 1;
@@ -315,10 +528,25 @@
             <details class="admin-section">
                 <summary>🔐 管理员</summary>
                 <div class="admin-content">
-                    <a href="/admin.html" style="display:block;text-align:center;padding:10px;background:#667eea;color:white;border-radius:8px;text-decoration:none;margin-bottom:10px;">📊 进入后台管理</a>
                     <input type="password" id="adminPwd" placeholder="管理员密码">
+                    
+                    <!-- 问题设置区 -->
+                    <div class="question-section">
+                        <h4>📋 设置问题</h4>
+                        <textarea id="questionInput" placeholder="输入要让学生回答的问题..."></textarea>
+                        <button class="btn btn-question" id="setQuestionBtn">📤 发布问题</button>
+                        <button class="btn btn-question" id="clearQuestionBtn" style="background:#f0f0f0;color:#666;">清除</button>
+                    </div>
+                    
+                    <!-- AI 功能区 -->
+                    <div class="ai-buttons">
+                        <h4>🤖 AI 智能分析</h4>
+                        <button class="btn btn-ai" id="aiAnalyzeBtn" style="width:100%;">✨ 分析弹幕 · 提炼精华</button>
+                    </div>
+                    
                     <button class="btn btn-danger" id="clearCloudBtn">清空词云</button>
                     <button class="btn btn-danger" id="clearAllBtn">清空所有</button>
+                    <a href="/admin.html" style="display:block;text-align:center;padding:8px;background:#f0f0f0;color:#666;border-radius:8px;text-decoration:none;margin-top:10px;font-size:13px;">📊 后台管理</a>
                 </div>
             </details>
         </div>
@@ -326,6 +554,22 @@
         <!-- 主内容区 -->
         <div class="main-content">
             <h1>🎬 实时弹幕词云</h1>
+            
+            <!-- 当前问题展示 -->
+            <div class="question-display" id="questionDisplay">
+                <div class="label">📋 当前问题</div>
+                <div class="question-text" id="currentQuestion">暂未设置问题，请在管理员区域设置</div>
+            </div>
+            
+            <!-- AI 分析结果展示 -->
+            <div class="ai-result-display" id="aiResultDisplay">
+                <div class="ai-header">
+                    <span class="ai-title">🤖 AI 分析结果</span>
+                    <button class="ai-close" id="closeAiResult">&times;</button>
+                </div>
+                <div class="ai-content" id="aiResultContent"></div>
+            </div>
+            
             <div class="wordcloud-container">
                 <div id="wordcloud"></div>
             </div>
@@ -529,6 +773,96 @@
         nameInput.addEventListener('blur', () => {
             localStorage.setItem('danmu_name', nameInput.value);
         });
+        
+        // =============== 问题管理功能 ===============
+        const questionDisplay = document.getElementById('questionDisplay');
+        const currentQuestionEl = document.getElementById('currentQuestion');
+        const questionInput = document.getElementById('questionInput');
+        const aiResultDisplay = document.getElementById('aiResultDisplay');
+        const aiResultContent = document.getElementById('aiResultContent');
+        
+        let currentQuestion = '';
+        
+        // 设置问题
+        document.getElementById('setQuestionBtn').addEventListener('click', () => {
+            const password = document.getElementById('adminPwd').value;
+            const question = questionInput.value.trim();
+            if (!password) {
+                showToast('请先输入管理员密码');
+                return;
+            }
+            if (!question) {
+                showToast('请输入问题内容');
+                return;
+            }
+            socket.emit('setQuestion', { password, question });
+        });
+        
+        // 清除问题
+        document.getElementById('clearQuestionBtn').addEventListener('click', () => {
+            const password = document.getElementById('adminPwd').value;
+            if (!password) {
+                showToast('请先输入管理员密码');
+                return;
+            }
+            socket.emit('setQuestion', { password, question: '' });
+            questionInput.value = '';
+        });
+        
+        // 接收问题更新
+        socket.on('questionUpdate', (data) => {
+            currentQuestion = data.question;
+            if (data.question) {
+                currentQuestionEl.textContent = data.question;
+                questionDisplay.classList.remove('empty');
+            } else {
+                currentQuestionEl.textContent = '暂未设置问题，请在管理员区域设置';
+                questionDisplay.classList.add('empty');
+            }
+        });
+        
+        // 关闭 AI 结果展示
+        document.getElementById('closeAiResult').addEventListener('click', () => {
+            aiResultDisplay.classList.remove('show');
+        });
+        
+        // =============== AI 分析功能（简化版）===============
+        // AI 分析弹幕
+        document.getElementById('aiAnalyzeBtn').addEventListener('click', () => {
+            const password = document.getElementById('adminPwd').value;
+            if (!password) {
+                showToast('请先输入管理员密码');
+                return;
+            }
+            showToast('🤖 AI 正在分析中...', 3000);
+            socket.emit('aiAnalyze', { password, question: currentQuestion });
+        });
+        
+        // 接收 AI 处理状态
+        socket.on('aiProcessing', (data) => {
+            showToast(data.message, 3000);
+        });
+        
+        // 接收 AI 结果 - 直接显示在页面上
+        socket.on('aiResult', (data) => {
+            // 简单的 Markdown 转 HTML
+            let html = data.content
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+            aiResultContent.innerHTML = html;
+            aiResultDisplay.classList.add('show');
+            showToast('✨ AI 分析完成');
+        });
+        
+        // 广播 AI 结果给所有用户
+        socket.on('aiResultBroadcast', (data) => {
+            let html = data.content
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+            aiResultContent.innerHTML = html;
+            aiResultDisplay.classList.add('show');
+        });
+        // ========================================
     </script>
 </body>
 </html>
