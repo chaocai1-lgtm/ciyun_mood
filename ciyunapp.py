@@ -108,6 +108,13 @@ st.markdown("""
     div[data-testid="stMetricValue"] {font-size: 24px; color: #4F46E5;}
     /* 隐藏页面导航菜单 */
     [data-testid="stSidebarNav"] {display: none;}
+    /* 减少刷新闪烁 */
+    .stApp, .main, [data-testid="stAppViewContainer"] {
+        transition: none !important;
+    }
+    iframe {
+        transition: opacity 0.3s ease;
+    }
     /* 手机端适配 */
     @media (max-width: 768px) {
         .main-title {font-size: 1.5rem !important;}
@@ -119,8 +126,8 @@ st.markdown("""
 
 # ==================== 页面 1: 学生端 (实时弹幕) ====================
 if page == "我是学生 (发送弹幕)":
-    # 自动刷新 (3秒一次)
-    st_autorefresh(interval=3000, key="student_refresh")
+    # 自动刷新 (5秒一次，减少闪烁)
+    st_autorefresh(interval=5000, key="student_refresh")
     
     st.markdown("<h1 class='main-title'>🎬 实时弹幕</h1>", unsafe_allow_html=True)
     
